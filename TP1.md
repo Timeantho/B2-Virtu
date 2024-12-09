@@ -62,6 +62,7 @@ Les objectifs de cette partie :
 - visualiser le `ping` avec Wireshark
 
 Vous utiliserez les IPs suivantes :
+g
 
 | Machine           | Adresse IP    |
 | ----------------- | ------------- |
