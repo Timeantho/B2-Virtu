@@ -12,7 +12,6 @@ Le cours, justement, est intitulé "Virtualisation Réseau", **on va donc profit
 - [I. Most simplest LAN](#i-most-simplest-lan)
 - [II. Ajoutons un switch](#ii-ajoutons-un-switch)
 - [III. Serveur DHCP](#iii-serveur-dhcp)
-  - [1. Legit](#1-legit)
   - [2. DHCP spoofing](#2-dhcp-spoofing)
   - [3. BONUS : DHCP starvation](#3-bonus--dhcp-starvation)
 
@@ -243,7 +242,7 @@ LPORT       : 10008
 RHOST:PORT  : 127.0.0.1:10009
 MTU:        : 1500
 ```
-````
+```
 PC3> show ip
 
 NAME        : PC3[1]
@@ -255,11 +254,12 @@ LPORT       : 20005
 RHOST:PORT  : 127.0.0.1:20006
 MTU         : 1500
 
-````
+```
 
 🌞 **Définir une IP statique sur les trois machines**
 
-````PC3> ip 10.1.1.3/24
+```
+PC3> ip 10.1.1.3/24
 Checking for duplicate address...
 save
 PC3 : 10.1.1.3 255.255.255.0
@@ -335,7 +335,8 @@ PC2>
 
 🌞 **Effectuer des `ping` d'une machine à l'autre**
 
-````PC1> ping 10.1.1.2
+```
+PC1> ping 10.1.1.2
 
 84 bytes from 10.1.1.2 icmp_seq=1 ttl=64 time=1.132 ms
 84 bytes from 10.1.1.2 icmp_seq=2 ttl=64 time=1.447 ms
@@ -364,97 +365,143 @@ PC3> ping 10.1.1.1
 84 bytes from 10.1.1.1 icmp_seq=5 ttl=64 time=2.409 ms
 
 PC3>
-````
+```
 
 
 # III. Serveur DHCP
 
-## 1. Legit
 
-![Topologie n°3](./img/topo3.png)
-
-> *VM Linux ou VPCS, libre à vous ! Excepté le serveur DHCP qui DOIT être une machine Linux. Je vous recommande encore une fois Rocky Linux.*
-
-Pour finir ce premier TP, on va mettre en place une 4ème machine : un serveur DHCP.
-
-Le serveur DHCP est chargé d'attribuer des IPs à des clients qui le demandent. Ca évite la tâche fastidieuse de saisir une IP manuellement.
-
-| Machine           | Adresse IP      |
-| ----------------- | --------------- |
-| `node1.tp1.efrei` | `N/A`           |
-| `node2.tp1.efrei` | `N/A`           |
-| `node3.tp1.efrei` | `N/A`           |
-| `dhcp.tp1.efrei`  | `10.1.1.253/24` |
-
-> Les IPs des trois nodes ne sont plus renseignées car le but de cette partie va être de faire en sorte qu'il puisse obtenir automatiquement une IP disponible, qui n'est pas déjà utilisée au sein du réseau, grâce au serveur DHCP.
 
 🌞 **Donner un accès Internet à la machine `dhcp.tp1.efrei`**
 
-````[root@user-xmg4agau1 ~]$ ping google.com
+```
+[root@localhost ~]$ ping google.com
 PING google.com (216.58.214.174) 56(84) bytes of data.
-64 bytes from mad01s26-in-f174.1e100.net (216.58.214.174): icmp_seq q = 1 ttl I = 63 time 37.0 ms
-64 bytes from par10s42-in-f14.1e100.net (216.58.214.174): icmp_seq=2 ttl I = 63 time=29.4 ms
-````
+64 bytes from mad01s26-in-f174.1e100.net (216.58.214.174): icmp_seq q = 1 ttl I = 63 time 37.4 ms
+64 bytes from par10s42-in-f14.1e100.net (216.58.214.174): icmp_seq=2 ttl I = 63 time=28.7 ms
+```
 
 🌞 **Installer et configurer un serveur DHCP**
 
-````
+```
 dnf-y install dhcp-server
-````
-````
+```
+```
 vi /etc/dhcp/dhcpd.conf
-````
-systemctl enable --now dhcpd
+```
+```
 authoritative;
 subnet 10.1.1.0 netmask 255.255.255.0 {
 	range 10.1.1.10 10.1.1.50;
 	option broadcast-address 10.1.1.1;
 	option routers 10.1.1.1;
 }
+```
+```
+systemctl enable --now dhcpd
+```
 
-> **N'oubliez pas d'enlever la carte NAT et remettre dans le setup initial une fois que vous avez passé votre commande `dnf install`.**
 
 🌞 **Récupérer une IP automatiquement depuis les 3 nodes**
 
-- là encore, montrez toutes les commandes réalisées
-- et le contenu des fichiers que vous éditez, si vous en éditez
-- prouver que votre changement d'IP est effectif, en une commande
+```
+PC1> dhcp
+DORA IP 10.1.1.10/24 GW 10.1.1.1
+
+PC1> show ip
+
+NAME        : PC1[1]
+IP/MASK     : 10.1.1.10/24
+GATEWAY     : 10.1.1.1
+DNS         : 
+DHCP SERVER : 10.1.1.253
+DHCP LEASE  : 563, 570/285/498
+MAC         : 00:50:79:66:68:01
+LPORT       : 20007
+RHOST:PORT  : 127.0.0.1:20008
+MTU         : 1500
+```
+
+```
+PC2> dhcp
+DORA IP 10.1.1.11/24 GW 10.1.1.1
+
+PC2> show ip
+
+NAME        : PC2[1]
+IP/MASK     : 10.1.1.11/24
+GATEWAY     : 10.1.1.1
+DNS         : 
+DHCP SERVER : 10.1.1.253
+DHCP LEASE  : 594, 599/299/524
+MAC         : 00:50:79:66:68:00
+LPORT       : 20009
+RHOST:PORT  : 127.0.0.1:20010
+MTU         : 1500
+```
+
+```
+PC3> dhcp
+DORA IP 10.1.1.12/24 GW 10.1.1.1
+
+PC3> show ip
+
+NAME        : PC3[1]
+IP/MASK     : 10.1.1.12/24
+GATEWAY     : 10.1.1.1
+DNS         : 
+DHCP SERVER : 10.1.1.253
+DHCP LEASE  : 584, 599/299/524
+MAC         : 00:50:79:66:68:02
+LPORT       : 20011
+RHOST:PORT  : 127.0.0.1:20012
+MTU         : 1500
+```
+
 
 🌞 **Wireshark !**
 
-- vous pouvez faire un clic droit sur un câble dans GNS, pour lancer une capture
-- mettez en évidence l'échange qui est réalisé pour qu'une machine récupère une IP en DHCP
-- l'échange est constitué de 4 messages, échangés entre le client et le serveur DHCP
-- *hint* : on appelle souvent cet échange DORA
-- une fois que vous avez visualisé cet échange, enregistrez la capture avec Wireshark, et joignez-la au compte rendu
+```
+voir capture_dhcp_wireshark
+```
 
 ## 2. DHCP spoofing
-
-Une attaque qui consiste à se faire passer pour le serveur DHCP du réseau.
-
 ➜ **Introduire une nouvelle VM dans la topologie, OS de votre choix**
-
-- ce sera notre machine attaquante
-- branchez-la au switch
-- installez dnsmasq sur la machine : un serveur DHCP (et DNS) performant
-- ce sera notre "rogue DHCP server" : serveur DHCP malveillant
 
 🌞 **Configurez dnsmasq**
 
-- il doit uniquement faire serveur DHCP (car il peut aussi faire serveur DNS)
-- il doit attribuer des adresses IP entre  `10.1.1.210` et `10.1.1.250`
+```
+dnf install -y dnsmasq
+```
+```
+dhcp-range=10.1.1.210 10.1.1.250 255.255.255.0 8h
+dhcp-authoritative
+interface=enp0s3
+```
 
 🌞 **Test !**
 
-- coupez le serveur DHCP "légitime" sur `dhcp.tp1.efrei`
-- vérifier qu'un client (VPCS) récupère bien une adresse IP dans la range configurée avec dnsmasq
+```
+PC1> dhcp
+DORA IP 10.1.1.210/24 GW 10.1.1.1
+
+PC1> show ip
+
+NAME        : PC1[1]
+IP/MASK     : 10.1.1.210/24
+```
+
 
 🌞 **Now race !**
 
-- rallumez le serveur DHCP légitime
-- demandez une IP avec un client (VPCS) et voyez qui répond
-- faites-le plusieurs fois pour voir si c'est consistant
-- je vous conseille de pop un nouveau VPCS à chaque fois, c'est très rapide
+```
+ne sachant pas quoi mettre, je met les résultats des statistiques sur 3 vps que j'ai éteins puis rallumé 5 fois :
+
+pc1: 5fois le bon dhcp
+pc2 : 3 fois el bon dhcp, 2 fois le mauvais
+pc3: pareil 
+
+```
 
 🌞 **Wireshark !**
 
